@@ -143,10 +143,12 @@ function App() {
     return () => window.removeEventListener('message', listener);
   }, [announce]);
   useEffect(() => {
-    if (!editing) setFormulaText(rawCell(activeCell));
+    if (!editing && document.activeElement !== formula.current) setFormulaText(rawCell(activeCell));
+  }, [activeCell, selection, currentSheetId, editing]);
+  useEffect(() => {
     setAddressText(selection.r1 === selection.r2 && selection.c1 === selection.c2 ? cellAddress(selection.r1, selection.c1) : `${cellAddress(range.r1, range.c1)}:${cellAddress(range.r2, range.c2)}`);
     bridge.remember({ sheetId: currentSheetId, selection, backgroundColor });
-  }, [activeCell, selection, currentSheetId, editing, backgroundColor]);
+  }, [selection, currentSheetId, backgroundColor]);
   useEffect(() => {
     if (editing) { editor.current?.focus(); if (editing.selectAll) editor.current?.select(); }
   }, [editing?.row, editing?.col]);
@@ -513,6 +515,7 @@ function App() {
           <label className="color-tool" title="填充颜色"><span className="fill-symbol">◩</span><span className="color-line" style={{ background: activeCell?.style?.background ?? '#dceddf' }}/><input aria-label="填充颜色" type="color" value={activeCell?.style?.background ?? '#dceddf'} onChange={e => setStyle({ background: e.target.value })}/></label>
         </div>
         <div className="tool-group">{tool('alignLeft', '左对齐', () => setStyle({ align: 'left' }), activeCell?.style?.align === 'left')}{tool('alignCenter', '居中', () => setStyle({ align: 'center' }), activeCell?.style?.align === 'center')}{tool('alignRight', '右对齐', () => setStyle({ align: 'right' }), activeCell?.style?.align === 'right')}{tool('wrap', '自动换行', () => setStyle({ wrap: !activeCell?.style?.wrap }), activeCell?.style?.wrap)}</div>
+        <div className="tool-group" role="group" aria-label="垂直对齐">{tool('alignTop', '顶端对齐', () => setStyle({ verticalAlign: 'top' }), activeCell?.style?.verticalAlign === 'top')}{tool('alignMiddle', '垂直居中', () => setStyle({ verticalAlign: 'middle' }), activeCell?.style?.verticalAlign === 'middle')}{tool('alignBottom', '底端对齐', () => setStyle({ verticalAlign: 'bottom' }), (activeCell?.style?.verticalAlign ?? 'bottom') === 'bottom')}</div>
         <div className="tool-group">{tool('merge', '合并单元格', () => dispatch({ type: 'merge', sheetId: sheet.id, range }), false, '合并')}{tool('formula', '自动求和', () => {
           const c = selection.c1, r = selection.r1;
           if (!r) { announce('请选择数据下方的空单元格'); return; }
@@ -539,7 +542,7 @@ function App() {
     {filterOpen && <div className="filter-bar"><Icon name="filter"/><span>筛选</span><select aria-label="筛选列" value={filterColumn} onChange={e => setFilterColumn(Number(e.target.value))}><option value={-1}>所有列</option>{Array.from({ length: Math.min(used.col + 1, 100) }, (_, c) => <option key={c} value={c}>{columnName(c)} · {display(0, c) || columnName(c)}</option>)}</select><input aria-label="筛选内容" placeholder="输入需要包含的内容…" value={filterText} onChange={e => setFilterText(e.target.value)}/><span className="muted">{filterText ? `${Math.max(0, rowCount - 1)} 行匹配` : '保留首行作为表头'}</span><button className="text-button" onClick={() => setFilterText('')}>清除</button><button className="icon-button" aria-label="关闭筛选" onClick={() => { setFilterOpen(false); setFilterText(''); }}><Icon name="close" size={14}/></button></div>}
     <div className="formula-bar"><input className="name-box" aria-label="单元格地址" value={addressText} onChange={e => setAddressText(e.target.value)} onKeyDown={e => {
       if (e.key !== 'Enter') return;
-      e.stopPropagation(); const parts = addressText.split(':'), first = parseAddress(parts[0]), last = parts[1] ? parseAddress(parts[1]) : first;
+      e.stopPropagation(); const parts = e.currentTarget.value.split(':'), first = parseAddress(parts[0]), last = parts[1] ? parseAddress(parts[1]) : first;
       if (first && last) {
         if (last[0] >= sheet.rowCount || last[1] >= sheet.columnCount) dispatch({ type: 'cells', sheetId: sheet.id, changes: [{ row: last[0], col: last[1], cell: sheet.cells[key(last[0], last[1])] ?? null }] });
         jump(...first); setSelection({ r1: first[0], c1: first[1], r2: last[0], c2: last[1] });
@@ -582,6 +585,7 @@ function App() {
                     textDecoration: cell?.style?.underline ? 'underline' : undefined,
                     fontSize: cell?.style?.fontSize ? cell.style.fontSize * 96 / 72 : undefined,
                     textAlign: cell?.style?.align ?? (typeof evaluation.value === 'number' ? 'right' : 'left'),
+                    justifyContent: cell?.style?.verticalAlign === 'top' ? 'flex-start' : cell?.style?.verticalAlign === 'middle' ? 'center' : 'flex-end',
                     whiteSpace: cell?.style?.wrap ? 'pre-wrap' : 'nowrap',
                   };
                   return <div key={c} role="gridcell" aria-label={`${cellAddress(r, c)}${value ? ' ' + value : ''}`} aria-selected={selected} data-address={cellAddress(r, c)} className={`cell ${selected ? 'selected-cell' : ''} ${active ? 'active-cell' : ''} ${evaluation.error && !evaluation.cached ? 'error-cell' : ''} ${visualRow === frozenRows - 1 && frozenRows ? 'freeze-bottom' : ''} ${c === frozenCols - 1 && frozenCols ? 'freeze-right' : ''}`} style={style} title={evaluation.cached ? `显示文件中的缓存值，本次未计算：${evaluation.error}\n${rawCell(cell)}` : cell?.formula ? `=${cell.formula}\n${value}` : value} onPointerDown={e => {

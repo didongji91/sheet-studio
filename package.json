@@ -2,7 +2,7 @@
   "name": "sheet-studio",
   "displayName": "Sheet Studio 表格与数据库",
   "description": "编辑 Excel/CSV，浏览和编辑 SQLite 文件，连接 PostgreSQL、MySQL、MariaDB 与 SQL Server，执行 SQL、管理数据和表结构。",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "local-tools",
   "license": "MIT",
   "author": "didongji91",

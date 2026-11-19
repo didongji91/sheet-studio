@@ -93,8 +93,8 @@ svg { flex-shrink: 0; }
 .app[data-resizing="row"], .app[data-resizing="row"] * { cursor: row-resize !important; user-select: none; }
 .app[data-resizing="column"], .app[data-resizing="column"] * { cursor: col-resize !important; user-select: none; }
 .resize-tooltip { position: fixed; z-index: 180; pointer-events: none; padding: 7px 10px; background: var(--surface); color: var(--text); border: 1px solid var(--accent); border-radius: 5px; box-shadow: 0 3px 14px #10281e26; font-size: 11px; white-space: nowrap; }
-.cell { position: absolute; border-right: 1px solid var(--grid-line); border-bottom: 1px solid var(--grid-line); padding: 5px 12px; overflow: hidden; font-size: 12px; line-height: 19px; background: var(--surface); cursor: cell; }
-.cell-value { display: block; overflow: hidden; text-overflow: clip; }
+.cell { position: absolute; display: flex; flex-direction: column; border-right: 1px solid var(--grid-line); border-bottom: 1px solid var(--grid-line); padding: 5px 12px; overflow: hidden; font-size: 12px; line-height: 1.4; background: var(--surface); cursor: cell; }
+.cell-value { display: block; flex: 0 1 auto; min-height: 0; max-height: 100%; width: 100%; overflow: hidden; text-overflow: clip; overflow-wrap: anywhere; }
 .cell.selected-cell::after { content: ""; pointer-events: none; position: absolute; inset: 0; background: var(--selection); }
 .cell.active-cell { overflow: visible; outline: 2px solid var(--accent); outline-offset: -2px; }
 .cell.active-cell > .cell-value { overflow: hidden; }

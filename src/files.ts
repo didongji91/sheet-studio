@@ -29,6 +29,7 @@ function readStyle(cell: ExcelJS.Cell): CellStyle | undefined {
   if (cell.font?.color && cell.font.color.theme !== 1) style.color = color(cell.font.color);
   if (cell.fill?.type === 'pattern' && cell.fill.pattern === 'solid') style.background = color(cell.fill.fgColor);
   if (['left', 'center', 'right'].includes(cell.alignment?.horizontal ?? '')) style.align = cell.alignment.horizontal as CellStyle['align'];
+  if (['top', 'middle', 'bottom'].includes(cell.alignment?.vertical ?? '')) style.verticalAlign = cell.alignment.vertical as CellStyle['verticalAlign'];
   if (cell.alignment?.wrapText) style.wrap = true;
   if (cell.numFmt && cell.numFmt !== 'General') style.numberFormat = cell.numFmt;
   return Object.keys(style).length ? style : undefined;
@@ -145,7 +146,7 @@ function writeStyle(cell: ExcelJS.Cell, style?: CellStyle) {
   if (!Object.keys(style).length) return;
   cell.font = { ...cell.font, ...(style.bold !== undefined ? { bold: style.bold } : {}), ...(style.italic !== undefined ? { italic: style.italic } : {}), ...(style.underline !== undefined ? { underline: style.underline } : {}), ...(style.fontSize ? { size: style.fontSize } : {}), ...(style.color ? { color: { argb: 'FF' + style.color.replace('#', '') } } : {}) };
   if (style.background) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + style.background.replace('#', '') } };
-  cell.alignment = { ...cell.alignment, ...(style.align ? { horizontal: style.align } : {}), ...(style.wrap !== undefined ? { wrapText: style.wrap } : {}) };
+  cell.alignment = { ...cell.alignment, ...(style.align ? { horizontal: style.align } : {}), ...(style.verticalAlign ? { vertical: style.verticalAlign } : {}), ...(style.wrap !== undefined ? { wrapText: style.wrap } : {}) };
   if (style.numberFormat !== undefined) cell.numFmt = style.numberFormat || 'General';
 }
 export async function writeWorkbook(model: Workbook, format: 'xlsx' | 'csv' | 'tsv', source?: LoadedFile, activeSheetId?: string): Promise<Uint8Array> {

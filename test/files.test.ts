@@ -149,3 +149,40 @@ test('XLSX dimension-only rows and columns beyond the used cells stay reachable'
   assert.equal(again.model.sheets[0].columnWidths[39], 225);
   assert.equal(again.model.sheets[0].rowHeights[149], 80);
 });
+test('tall merged XLSX titles retain vertical alignment, row height and other formatting when edited or exported', async () => {
+  const native = new ExcelJS.Workbook(), ws = native.addWorksheet('课表');
+  ws.mergeCells('A1:I1');
+  ws.getRow(1).height = 132.75;
+  ws.getCell('A1').value = '2025级（上）《物理实验》课表（第1轮）';
+  ws.getCell('A1').font = { bold: true, size: 24 };
+  ws.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  ws.getCell('A1').border = { bottom: { style: 'thin' } };
+  for (const [index, alignment] of ['top', 'middle', 'bottom'].entries()) {
+    ws.getCell(index + 2, 1).value = alignment;
+    ws.getCell(index + 2, 1).alignment = { vertical: alignment as ExcelJS.Alignment['vertical'] };
+  }
+  const loaded = await readWorkbook(new Uint8Array(await native.xlsx.writeBuffer() as ArrayBuffer), 'timetable.xlsx');
+  const sheet = loaded.model.sheets[0];
+  assert.equal(sheet.cells['0,0'].style?.verticalAlign, 'middle');
+  assert.equal(sheet.rowHeights[0], 177);
+  for (const [index, alignment] of ['top', 'middle', 'bottom'].entries()) {
+    assert.equal(sheet.cells[`${index + 1},0`].style?.verticalAlign, alignment);
+  }
+  const updated = applyOperation(loaded.model, { type: 'style', sheetId: sheet.id, range: { r1: 0, c1: 0, r2: 0, c2: 8 }, style: { verticalAlign: 'bottom' } });
+  assert.equal(sheet.cells['0,0'].style?.verticalAlign, 'middle', 'undo snapshot must retain the original alignment');
+  for (const source of [loaded, undefined]) {
+    const bytes = await writeWorkbook(updated, 'xlsx', source);
+    const saved = new ExcelJS.Workbook(); await saved.xlsx.load(Buffer.from(bytes) as any);
+    const restored = saved.worksheets[0];
+    assert.equal(restored.getCell('A1').alignment.vertical, 'bottom');
+    assert.equal(restored.getCell('A1').alignment.horizontal, 'center');
+    assert.equal(restored.getCell('A1').alignment.wrapText, true);
+    assert.equal(restored.getCell('A1').font.size, 24);
+    assert.equal(restored.getCell('A1').border.bottom?.style, 'thin');
+    assert.equal(restored.getRow(1).height, 132.75);
+    assert.equal(restored.getCell('I1').master.address, 'A1');
+    const again = await readWorkbook(bytes, 'again.xlsx');
+    assert.equal(again.model.sheets[0].cells['0,0'].style?.verticalAlign, 'bottom');
+    assert.equal(again.model.sheets[0].rowHeights[0], 177);
+  }
+});

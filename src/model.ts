@@ -2,7 +2,8 @@ export type Scalar = string | number | boolean | null;
 export interface CellStyle {
   bold?: boolean; italic?: boolean; underline?: boolean;
   color?: string; background?: string;
-  align?: 'left' | 'center' | 'right'; wrap?: boolean;
+  align?: 'left' | 'center' | 'right';
+  verticalAlign?: 'top' | 'middle' | 'bottom'; wrap?: boolean;
   fontSize?: number; numberFormat?: string;
 }
 export interface Cell {
