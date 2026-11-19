@@ -1,0 +1,58 @@
+async (page) => {
+  await page.reload();
+  await page.getByRole('grid', { name: '项目明细', exact: true }).waitFor();
+  const button = name => page.getByRole('button', { name, exact: true });
+  const address = page.getByRole('textbox', { name: '单元格地址', exact: true });
+  const size = async (role, name, axis, expected) => {
+    await page.waitForFunction(({ role, name, axis, expected }) => {
+      const el = [...document.querySelectorAll('[role]')].find(e => e.getAttribute('role') === role && e.getAttribute('aria-label') === name);
+      return el && Math.abs(parseFloat(el.style[axis]) - expected) < .02;
+    }, { role, name, axis, expected });
+  };
+  await address.fill('B2'); await address.press('Enter');
+  await page.getByRole('slider', { name: '缩放', exact: true }).focus();
+  await page.keyboard.press('End');
+  await page.getByText('160%', { exact: true }).waitFor();
+  let handle = await page.getByRole('separator', { name: '调整第 2 行行高', exact: true }).boundingBox();
+  await page.mouse.move(handle.x + 12, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 12, handle.y + handle.height / 2 + 32, { steps: 4 });
+  await page.mouse.up();
+  await size('rowheader', '2', 'height', 50);
+  await button('撤销 (Ctrl+Z)').click();
+  await size('rowheader', '2', 'height', 30);
+  handle = await page.getByRole('separator', { name: '调整 C 列列宽', exact: true }).boundingBox();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2 + 32, handle.y + 10, { steps: 4 });
+  await page.mouse.up();
+  await size('columnheader', 'C', 'width', 135);
+  await button('撤销 (Ctrl+Z)').click();
+  await size('columnheader', 'C', 'width', 115);
+  const rowSeparator = page.getByRole('separator', { name: '调整第 2 行行高', exact: true });
+  await rowSeparator.focus(); await rowSeparator.press('Shift+ArrowDown');
+  await size('rowheader', '2', 'height', 40);
+  await button('撤销 (Ctrl+Z)').click();
+  const colSeparator = page.getByRole('separator', { name: '调整 C 列列宽', exact: true });
+  await colSeparator.focus(); await colSeparator.press('ArrowRight');
+  await size('columnheader', 'C', 'width', 116);
+  await colSeparator.press('Enter');
+  await page.getByRole('spinbutton', { name: '设置列宽', exact: true }).fill('175.5');
+  await button('确定').click();
+  await size('columnheader', 'C', 'width', 175.5);
+  await colSeparator.dblclick();
+  await size('columnheader', 'C', 'width', 88);
+  await button('视图').click(); await button('重置缩放').click();
+  await button('开始').click(); await button('筛选').click();
+  await page.getByRole('textbox', { name: '筛选内容', exact: true }).fill('设计团队');
+  await page.getByText('3 行匹配', { exact: true }).waitFor();
+  await address.fill('A5'); await address.press('Enter');
+  handle = await page.getByRole('separator', { name: '调整第 5 行行高', exact: true }).boundingBox();
+  await page.mouse.move(handle.x + 12, handle.y + 2);
+  await page.mouse.down(); await page.mouse.move(handle.x + 12, handle.y + 16); await page.mouse.up();
+  await size('rowheader', '5', 'height', 44);
+  await button('关闭筛选').click();
+  await size('rowheader', '5', 'height', 44);
+  await size('rowheader', '3', 'height', 30);
+  console.log('PASS zoom-correct row/column dragging, keyboard resizing, exact-size dialog from separator, column autofit and resizing filtered rows');
+}

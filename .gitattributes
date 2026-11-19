@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+*.wasm binary
+*.vsix binary
+# Third-party license text is copied verbatim by the build.
+THIRD_PARTY_NOTICES.txt -whitespace

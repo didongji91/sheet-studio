@@ -1,0 +1,236 @@
+{
+  "name": "sheet-studio",
+  "displayName": "Sheet Studio 表格与数据库",
+  "description": "编辑 Excel/CSV，浏览和编辑 SQLite 文件，连接 PostgreSQL、MySQL、MariaDB 与 SQL Server，执行 SQL、管理数据和表结构。",
+  "version": "0.2.0",
+  "publisher": "local-tools",
+  "license": "MIT",
+  "author": "didongji91",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/didongji91/sheet-studio.git"
+  },
+  "homepage": "https://github.com/didongji91/sheet-studio#readme",
+  "bugs": {
+    "url": "https://github.com/didongji91/sheet-studio/issues"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization",
+    "Data Science"
+  ],
+  "keywords": [
+    "excel",
+    "xlsx",
+    "csv",
+    "spreadsheet",
+    "表格",
+    "sqlite",
+    "database",
+    "postgresql",
+    "mysql"
+  ],
+  "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "onCustomEditor:sheetStudio.editor",
+    "onCustomEditor:sheetStudio.database"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "sheetStudio.database",
+        "displayName": "Sheet Studio 数据库",
+        "selector": [
+          {
+            "filenamePattern": "*.{db,sqlite,sqlite3,db3,s3db,sqllite}"
+          },
+          {
+            "filenamePattern": "*.{DB,SQLITE,SQLITE3,DB3,S3DB,SQLLITE}"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "sheetStudio.editor",
+        "displayName": "Sheet Studio 表格编辑器",
+        "selector": [
+          {
+            "filenamePattern": "*.{xlsx,xls,xlsm,xlsb,csv,tsv,ods}"
+          },
+          {
+            "filenamePattern": "*.{XLSX,XLS,XLSM,XLSB,CSV,TSV,ODS}"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sheetStudio.openDatabase",
+        "title": "Sheet Studio: 打开 SQLite 数据库",
+        "icon": "$(database)"
+      },
+      {
+        "command": "sheetStudio.createDatabase",
+        "title": "Sheet Studio: 新建 SQLite 数据库",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "sheetStudio.databaseManager",
+        "title": "Sheet Studio: 数据库连接管理",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "sheetStudio.open",
+        "title": "Sheet Studio: 打开表格",
+        "icon": "$(table)"
+      },
+      {
+        "command": "sheetStudio.create",
+        "title": "Sheet Studio: 新建 Excel 工作簿",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "sheetStudio.searchWorkspace",
+        "title": "Sheet Studio: 检索工作区表格",
+        "icon": "$(search)"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "sheetStudio.openDatabase",
+          "when": "resourceExtname =~ /\\.(db|sqlite|sqlite3|db3|s3db|sqllite)$/i",
+          "group": "navigation"
+        },
+        {
+          "command": "sheetStudio.open",
+          "when": "resourceExtname =~ /\\.(xlsx|xls|xlsm|xlsb|csv|tsv|ods)$/i",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Sheet Studio",
+      "properties": {
+        "sheetStudio.databaseMaxFileSizeMB": {
+          "type": "number",
+          "default": 128,
+          "minimum": 1,
+          "maximum": 1024,
+          "description": "SQLite 文件编辑模式的最大文件大小（MB）。文件在独立工作进程内处理。"
+        },
+        "sheetStudio.databaseQueryTimeoutSeconds": {
+          "type": "number",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 300,
+          "description": "SQLite 查询超时时间（秒）。超时或取消后保留此前已完成的修改。"
+        },
+        "sheetStudio.backgroundColor": {
+          "type": "string",
+          "scope": "application",
+          "default": "#ffffff",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "表格编辑器的独立背景色，不跟随 VS Code 或系统主题。可在插件“视图”工具栏中选择，格式为 #RRGGBB。"
+        },
+        "sheetStudio.maxFileSizeMB": {
+          "type": "number",
+          "default": 40,
+          "minimum": 1,
+          "maximum": 500,
+          "description": "允许打开的最大文件大小（MB）。"
+        },
+        "sheetStudio.csvEncoding": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "utf8",
+            "gb18030",
+            "utf16le"
+          ],
+          "description": "CSV/TSV 文本编码。auto 优先识别 UTF-8，失败时使用 GB18030。"
+        },
+        "sheetStudio.csvDelimiter": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            ",",
+            ";",
+            "\t",
+            "|"
+          ],
+          "description": "CSV 分隔符。auto 自动识别。"
+        },
+        "sheetStudio.searchFileLimit": {
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 2000,
+          "description": "工作区检索最多读取的表格文件数。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:extension": "npm run build && node scripts/test-extension.mjs",
+    "check": "npm run typecheck && npm test && npm run build",
+    "package": "npm run check && vsce package --no-dependencies",
+    "dev": "node scripts/dev.mjs",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "1.2.5",
+    "exceljs": "^4.4.0",
+    "fast-formula-parser": "^1.0.19",
+    "fflate": "^0.8.2",
+    "iconv-lite": "^0.7.0",
+    "mssql": "^12.7.15",
+    "mysql2": "^3.24.6",
+    "papaparse": "^5.5.3",
+    "pg": "^8.23.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sql-formatter": "^15.9.1",
+    "sql.js": "^1.17.0",
+    "ssf": "^0.11.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^22.0.0",
+    "@types/papaparse": "^5.3.16",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/sql.js": "^1.4.11",
+    "@types/vscode": "^1.96.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
